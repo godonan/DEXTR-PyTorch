@@ -27,7 +27,7 @@ device = torch.device("cuda:"+str(gpu_id) if torch.cuda.is_available() else "cpu
 #  Create the network and load the weights
 net = resnet.resnet101(1, nInputChannels=4, classifier='psp')
 print("Initializing weights from: {}".format(os.path.join(mypath.Path.models_dir(), modelName + '.pth')))
-state_dict_checkpoint = torch.load(os.path.join(Path.models_dir(), modelName + '.pth'),
+state_dict_checkpoint = torch.load(os.path.join(mypath.Path.models_dir(), modelName + '.pth'),
                                    map_location=lambda storage, loc: storage)
 
 # Remove the prefix .module from the model when it is trained using DataParallel
@@ -48,31 +48,31 @@ net.to(device)
 supportedExtensions = ['jpg']
 
 tkinter.Tk().withdraw()
-directory = filedialog.askdirectory(title = "Select directory of files, jpg only")
-
-for filename in os.listdir(directory):
+scan_dir = filedialog.askdirectory(title = "Select directory of files, jpg only")
+mask_dir = filedialog.askdirectory(title = "Select directory to save masks")
+for filename in os.listdir(scan_dir):
     if not filename.endswith(".jpg"):
         continue
     
     name = pathlib.Path(filename).stem
-    print("Opening file %s, name")
+    print("Opening file %s" %(filename))
     #  Read image and click the points
-    image = np.array(Image.open(name))
+    image = np.array(Image.open(os.path.join(scan_dir, filename)))
     plt.ion()
     plt.axis('off')
     plt.imshow(image)
     plt.title('Click the four extreme points of the objects\nHit enter when done (do not close the window)')
     results = []
     with torch.no_grad():
-        while 1:
+        while True:
             extreme_points_ori = np.array(plt.ginput(4, timeout=0)).astype(np.int)
             if extreme_points_ori.shape[0] < 4:
                 if len(results) > 0:
-                    helpers.save_mask(results, name +'.png')
+                    helpers.save_mask(results, os.path.join(mask_dir, name) + ".png")
                     print('Saving mask annotation in %s.png and exiting...', name)
                 else:
                     print('Exiting...')
-                sys.exit()
+                break
 
             #  Crop image to the bounding box from the extreme points and resize
             bbox = helpers.get_bbox(image, points=extreme_points_ori, pad=pad, zero_pad=True)
