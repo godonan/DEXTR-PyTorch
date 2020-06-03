@@ -46,7 +46,7 @@ net.to(device)
 
 
 supportedExtensions = ['jpg']
-
+print("Select directory")
 tkinter.Tk().withdraw()
 scan_dir = filedialog.askdirectory(title = "Select directory of files, jpg only")
 mask_dir = filedialog.askdirectory(title = "Select directory to save masks")
